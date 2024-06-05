@@ -2,8 +2,6 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report, confusion_matrix
 import keras
-#from keras.models import Sequential
-#from keras.layers import Dense, Dropout
 
 # Imprimir la versión de Keras
 print(keras.__version__)
