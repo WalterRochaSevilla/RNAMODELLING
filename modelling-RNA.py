@@ -15,12 +15,16 @@ test_data = pd.read_csv('test.csv')
 train_data['satisfaction'] = train_data['satisfaction'].map({'satisfied': 1, 'neutral or dissatisfied': 0})
 test_data['satisfaction'] = test_data['satisfaction'].map({'satisfied': 1, 'neutral or dissatisfied': 0})
 
+# Manejo de valores nulos en 'Arrival Delay in Minutes'
+train_data['Arrival Delay in Minutes'].fillna(train_data['Arrival Delay in Minutes'].mean(), inplace=True)
+test_data['Arrival Delay in Minutes'].fillna(test_data['Arrival Delay in Minutes'].mean(), inplace=True)
+
 # Seleccionar las características y la variable objetivo en el conjunto de entrenamiento
-X_train = train_data.drop(columns=['satisfaction'])
+X_train = train_data.drop(columns=['satisfaction', 'id'])
 y_train = train_data['satisfaction']
 
 # Seleccionar las características y la variable objetivo en el conjunto de prueba
-X_test = test_data.drop(columns=['satisfaction'])
+X_test = test_data.drop(columns=['satisfaction', 'id'])
 y_test = test_data['satisfaction']
 
 # Codificación de variables categóricas en ambos conjuntos de datos
@@ -37,17 +41,24 @@ X_test_scaled = scaler.transform(X_test)
 
 # Paso 3: Diseño de la red neuronal
 model = keras.Sequential()
-model.add(keras.layers.Dense(64, input_dim=X_train_scaled.shape[1], activation='relu'))
+model.add(keras.layers.Dense(128, input_dim=X_train_scaled.shape[1], activation='relu'))
+model.add(keras.layers.BatchNormalization())
+model.add(keras.layers.Dropout(0.5))
+model.add(keras.layers.Dense(64, activation='relu'))
+model.add(keras.layers.BatchNormalization())
 model.add(keras.layers.Dropout(0.5))
 model.add(keras.layers.Dense(32, activation='relu'))
+model.add(keras.layers.BatchNormalization())
 model.add(keras.layers.Dropout(0.5))
 model.add(keras.layers.Dense(1, activation='sigmoid'))
 
 # Compilación del modelo
 model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy'])
 
-# Paso 4: Entrenamiento de la red
-history = model.fit(X_train_scaled, y_train, epochs=50, batch_size=32, validation_split=0.2)
+# Paso 4: Entrenamiento de la red con Early Stopping
+early_stopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+
+history = model.fit(X_train_scaled, y_train, epochs=1000, batch_size=32, validation_split=0.2, callbacks=[early_stopping])
 
 # Paso 5: Evaluación del modelo
 y_pred = (model.predict(X_test_scaled) > 0.5).astype("int32")
