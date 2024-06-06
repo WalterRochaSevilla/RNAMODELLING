@@ -1,4 +1,4 @@
-Walter (100%)
+Walter (75%)
 Libia 
-Daniel 
+Daniel (25%)
 Alejandra 
