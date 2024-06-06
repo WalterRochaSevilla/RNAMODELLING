@@ -2,7 +2,6 @@ import pandas as pd
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import classification_report, confusion_matrix
 import keras
-
 # Imprimir la versión de Keras
 print(keras.__version__)
 
@@ -40,14 +39,15 @@ X_train_scaled = scaler.fit_transform(X_train)
 X_test_scaled = scaler.transform(X_test)
 
 # Paso 3: Diseño de la red neuronal
+
 model = keras.Sequential()
-model.add(keras.layers.Dense(128, input_dim=X_train_scaled.shape[1], activation='relu'))
+model.add(keras.layers.Dense(128, input_dim=X_train_scaled.shape[1], activation='relu', kernel_regularizer=keras.regularizers.l2(0.001)))
+model.add(keras.layers.BatchNormalization()) #normalización por paquetes
+model.add(keras.layers.Dropout(0.5))
+model.add(keras.layers.Dense(64, activation='relu',kernel_regularizer=keras.regularizers.l2(0.001)))
 model.add(keras.layers.BatchNormalization())
 model.add(keras.layers.Dropout(0.5))
-model.add(keras.layers.Dense(64, activation='relu'))
-model.add(keras.layers.BatchNormalization())
-model.add(keras.layers.Dropout(0.5))
-model.add(keras.layers.Dense(32, activation='relu'))
+model.add(keras.layers.Dense(32, activation='relu',kernel_regularizer=keras.regularizers.l2(0.001)))
 model.add(keras.layers.BatchNormalization())
 model.add(keras.layers.Dropout(0.5))
 model.add(keras.layers.Dense(1, activation='sigmoid'))
@@ -58,8 +58,8 @@ model.compile(optimizer='adam', loss='binary_crossentropy', metrics=['accuracy']
 # Paso 4: Entrenamiento de la red con Early Stopping
 early_stopping = keras.callbacks.EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
 
-history = model.fit(X_train_scaled, y_train, epochs=1000, batch_size=32, validation_split=0.2, callbacks=[early_stopping])
-
+history = model.fit(X_train_scaled, y_train, epochs=1000, batch_size=32,  validation_data=(X_test_scaled, y_test), callbacks=[early_stopping])
+#no usar validation split, directamente usar test
 # Paso 5: Evaluación del modelo
 y_pred = (model.predict(X_test_scaled) > 0.5).astype("int32")
 
